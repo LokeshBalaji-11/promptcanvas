@@ -125,6 +125,9 @@ export const AsciiScrollSection: React.FC<AsciiScrollSectionProps> = ({ accentCo
     return () => {
       window.removeEventListener('resize', handleResize);
       st.kill();
+      ScrollTrigger.getAll().forEach(t => t.kill());
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

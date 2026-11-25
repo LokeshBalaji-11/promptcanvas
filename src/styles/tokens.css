@@ -1,0 +1,56 @@
+:root {
+  --bg-primary: #07070A;
+  --color-error: #FF3B5C;
+  --color-success: #3DFFA2;
+  --color-cyan: #22D3EE;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Space Grotesk', sans-serif;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: #F5F5F5;
+  font-family: var(--font-display);
+  overflow-x: hidden;
+}
+
+/* Subtle noise overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Animated gradient mesh background */
+.bg-gradient-mesh {
+  background: radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.06) 0%, transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(61, 255, 162, 0.05) 0%, transparent 40%),
+              radial-gradient(circle at 50% 50%, rgba(255, 59, 92, 0.04) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #07070A;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

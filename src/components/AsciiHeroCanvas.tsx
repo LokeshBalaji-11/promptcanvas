@@ -14,6 +14,7 @@ export const AsciiHeroCanvas: React.FC<AsciiHeroCanvasProps> = ({ accentColor })
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let animationFrameId: number;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
@@ -30,7 +31,10 @@ export const AsciiHeroCanvas: React.FC<AsciiHeroCanvasProps> = ({ accentColor })
       colorIdx: number;
     }> = [];
 
-    const numParticles = Math.floor((width * height) / 3500);
+    // Reduce particle count on mobile for smooth 60fps
+    const isMobile = width < 768;
+    const densityDivisor = isMobile ? 12000 : 4000;
+    const numParticles = Math.floor((width * height) / densityDivisor);
     const centerX = width / 2;
     const centerY = height / 2;
 
@@ -59,7 +63,49 @@ export const AsciiHeroCanvas: React.FC<AsciiHeroCanvasProps> = ({ accentColor })
       mouseX = e.clientX;
       mouseY = e.clientY;
     };
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+    let step = 0;
+    const render = () => {
+      step++;
+      ctx.fillStyle = '#07070A';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.font = '12px "JetBrains Mono", monospace';
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        if (!prefersReducedMotion) {
+          // Lerp towards baseX/baseY
+          p.x += (p.baseX - p.x) * p.speed;
+          p.y += (p.baseY - p.y) * p.speed;
+
+          // Mouse repulsion
+          const dx = mouseX - p.x;
+          const dy = mouseY - p.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            const angle = Math.atan2(dy, dx);
+            p.x -= Math.cos(angle) * (120 - dist) * 0.1;
+            p.y -= Math.sin(angle) * (120 - dist) * 0.1;
+          }
+        }
+
+        const color = SPECTRUM_COLORS[(p.colorIdx + Math.floor(step / 30)) % SPECTRUM_COLORS.length];
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.85;
+        ctx.fillText(p.char, p.x, p.y);
+      }
+
+      if (!prefersReducedMotion) {
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
+    render();
 
     const handleResize = () => {
       if (!canvas) return;
@@ -67,45 +113,6 @@ export const AsciiHeroCanvas: React.FC<AsciiHeroCanvasProps> = ({ accentColor })
       height = canvas.height = window.innerHeight;
     };
     window.addEventListener('resize', handleResize);
-
-    let progress = 0;
-
-    const render = () => {
-      ctx.fillStyle = '#060608';
-      ctx.fillRect(0, 0, width, height);
-
-      if (progress < 1) progress += 0.008;
-
-      particles.forEach((p, idx) => {
-        const targetX = p.x + (p.baseX - p.x) * p.speed * progress;
-        const targetY = p.y + (p.baseY - p.y) * p.speed * progress;
-        p.x = targetX;
-        p.y = targetY;
-
-        const dx = mouseX - p.x;
-        const dy = mouseY - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        let renderX = p.x;
-        let renderY = p.y;
-
-        if (dist < 120) {
-          const angle = Math.atan2(dy, dx);
-          renderX -= Math.cos(angle) * (120 - dist);
-          renderY -= Math.sin(angle) * (120 - dist);
-        }
-
-        // Cycle color spectrum over time
-        const dynamicColor = SPECTRUM_COLORS[(p.colorIdx + Math.floor(Date.now() / 400)) % SPECTRUM_COLORS.length];
-        ctx.fillStyle = dynamicColor;
-        ctx.font = `${p.size}px 'JetBrains Mono', monospace`;
-        ctx.globalAlpha = Math.min(0.9, (dist < 120 ? 1 : 0.5) * progress);
-        ctx.fillText(p.char, renderX, renderY);
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    render();
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
@@ -117,7 +124,8 @@ export const AsciiHeroCanvas: React.FC<AsciiHeroCanvasProps> = ({ accentColor })
   return (
     <canvas 
       ref={canvasRef} 
-      className="absolute inset-0 w-full h-full pointer-events-none z-0"
+      className="absolute inset-0 w-full h-full z-0 pointer-events-none"
+      style={{ imageRendering: 'pixelated' }}
     />
   );
 };

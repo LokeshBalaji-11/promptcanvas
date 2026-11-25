@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.claude/
+.playwright-mcp/
+.env
+.env.local
+.vscode/
